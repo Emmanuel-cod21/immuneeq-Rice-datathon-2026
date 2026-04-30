@@ -211,7 +211,7 @@ Contact
 For questions about this analysis:
 
 GitHub Issues: Open an issue
-Email: Uomaemmanuel@myyahoo.com
+Email: Uzomaemmanuel@myyahoo.com
 Final Thought
 "Precision medicine will define the next era of HIV care."
 
