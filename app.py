@@ -57,8 +57,8 @@ trt_options = st.sidebar.multiselect("Treatment Arm", options=list(trt_map.value
 
 st.sidebar.markdown("**Race**")
 st.sidebar.caption("⚠️ 1996 dataset recorded race as binary — not a reflection of our classification.")
-race_options = st.sidebar.multiselect("", options=['White', 'Non-white (1996 binary classification)'], 
-                                       default=['White', 'Non-white (1996 binary classification)'],
+race_options = st.sidebar.multiselect("", options=['White', 'Non-white2020'], 
+                                       default=['White', 'Non-white2020'],
                                        label_visibility="collapsed")
 
 gender_options = st.sidebar.multiselect("Gender", options=['Male', 'Female'], default=['Male', 'Female'])
@@ -69,7 +69,7 @@ risk_options = st.sidebar.multiselect("Transmission Risk Group",
 trt_vals = [k for k, v in trt_map.items() if v in trt_options]
 race_vals = []
 if 'White' in race_options: race_vals.append(0)
-if 'Non-white (1996 binary classification)' in race_options: race_vals.append(1)
+if 'Non-white2020' in race_options: race_vals.append(1)
 gender_vals = [1 if g == 'Male' else 0 for g in gender_options]
 
 filtered = df[
@@ -86,8 +86,8 @@ st.markdown("---")
 col1, col2, col3, col4 = st.columns(4)
 col1.metric("Patients", f"{len(filtered):,}")
 col2.metric("CD4 Improvement Rate", f"{filtered['cd4_improved'].mean():.1%}")
-col3.metric("Mean Baseline CD4", f"{filtered['cd40'].mean():.0f} cells/mm³")
-col4.metric("Mean CD4 at 20 Weeks", f"{filtered['cd420'].mean():.0f} cells/mm³")
+col3.metric("Baseline CD4", f"{filtered['cd40'].mean():.0f} cells/mm³")
+col4.metric("CD4 at 20 Weeks", f"{filtered['cd420'].mean():.0f} cells/mm³")
 
 # ── Tabs ──────────────────────────────────────────────────────────────────────
 tab1, tab2, tab3, tab4 = st.tabs(["📊 Treatment Outcomes", "🤖 ML Prediction", "📈 Survival Analysis", "⚖️ Equity Analysis"])
