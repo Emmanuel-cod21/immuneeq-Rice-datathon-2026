@@ -47,9 +47,11 @@ AUC is computed only on patients the Random Forest did not train on.
 - The data cannot establish either the presence or absence of model bias.
 
 ### 5. Survival analysis (Kaplan-Meier)
-- Race (binary): log-rank p = 0.0619, not significant.
-- Treatment arm and transmission risk group: curves are shown in the notebook and dashboard. The dashboard computes log-rank p-values live for the selected patients. Group differences should not be read from the curves without those p-values. Curves are unadjusted, and some groups are small (hemophilia n = 180, IV drug use n = 276).
-
+Log-rank tests on the full cohort (the dashboard recomputes these live for filtered patients):
+- Treatment arm: p < 0.0001. The ZDV-only arm has visibly lower survival than the three other arms, which look similar to each other. This is the one clear survival difference in the data.
+- Race (binary): p = 0.0619, not significant.
+- Transmission risk group: p = 0.2743, not significant. Apparent separation between curves (for example IV drug use late in follow-up) is within noise, and some groups are small (hemophilia n = 180, IV drug use n = 276).
+- Curves are unadjusted for baseline CD4 or other covariates. 
 ---
 
 ## Methods
