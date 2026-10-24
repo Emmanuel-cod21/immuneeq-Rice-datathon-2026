@@ -109,7 +109,6 @@ Modern HIV patients achieve viral suppression but face new challenges: metabolic
 ## Acknowledgments
 - AIDS Clinical Trials Group Study 175 dataset, UCI ML Repository
 - Rice Datathon 2026
-- Claude (Anthropic) for analysis assistance
 
 ## License
 MIT License
