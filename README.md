@@ -1,195 +1,115 @@
-ImmuneEQ — CD4/CD8 Trajectories, Treatment Heterogeneity & Equity-Informed Precision Medicine in HIV Care
-Rice Datathon 2026 - Beginner Track
+# ImmuneEQ: CD4 Response, Treatment Heterogeneity, and Subgroup Model Performance in HIV Care
+**Rice Datathon 2026, Beginner Track**
+
+Live dashboard: [immuneeq.streamlit.app](https://immuneeq.streamlit.app)
 
 ---
 
-Overview
-ImmuneEQ analyzes the AIDS Clinical Trials Group Study 175 dataset (1996) to investigate treatment heterogeneity and explore evidence for precision medicine approaches in HIV care. The analysis combines classical statistical methods with machine learning to reveal measurable differences in treatment response across demographic groups and transmission risk categories.
+## Overview
+ImmuneEQ analyzes the AIDS Clinical Trials Group Study 175 (ACTG 175) dataset (1996) to ask whether CD4 response to HIV treatment and the performance of a simple outcome-prediction model differ across demographic groups. The project combines descriptive statistics, tree-based classifiers, and Kaplan-Meier survival analysis. Results below are limited to what has been checked against the data; weaker or inconclusive findings are reported as such.
 
 ---
 
-Key Findings
+## Results
 
-1. Treatment Effectiveness
-- 55% of patients showed CD4 cell improvement over 20 weeks
-- Mean CD4 increase: +30.2 cells/mm³ overall
-- ZDV + ddI and ddI-only arms outperformed ZDV monotherapy
+### 1. Treatment outcomes
+- 2,139 patients across 4 treatment arms. 55.0% (1,176) had any increase in CD4 at 20 weeks.
+- Mean CD4 rose from 350.5 to 371.3 cells/mm³ (mean change +20.8).
+- "Improved" means CD4 at 20 weeks is higher than baseline by any amount, so it includes small, noisy changes.
 
-2. Machine Learning — Treatment Outcome Prediction
-- Random Forest classifier**: Cross-validated AUC = 0.657
-- Gradient Boosting classifier**: Cross-validated AUC = 0.651
-- Top predictive features: baseline CD4, baseline CD8, body weight, age, prior antiretroviral therapy
-- Race emerged as an independent predictive feature, validating the equity analysis
+### 2. Raw CD4 change by race (binary variable recorded in 1996)
+- White: +24.0 cells/mm³ (n = 1,522). Non-white: +12.9 cells/mm³ (n = 617). Difference: 11.1.
+- Welch t-test: t = 1.96, p = 0.0506, 95% CI for the difference [-0.0, 22.3].
+- This is suggestive but **not statistically significant at the 0.05 level**, and it is unadjusted for baseline CD4 or treatment arm.
 
-3. Model Equity Analysis
-- By race: White AUC = 0.876, Non-white AUC = 0.878 — no algorithmic bias detected
-- By gender: Female AUC = 0.920, Male AUC = 0.868 — model predicts female outcomes more accurately, suggesting differential treatment response patterns worth further investigation
+### 3. Outcome prediction (Random Forest, Gradient Boosting)
+Target: any CD4 increase at 20 weeks.
 
-4. Survival Analysis (Kaplan-Meier)
-- Treatment arms show clear survival separation — combination therapy outperforms monotherapy
-- Racial survival gap approaches but does not reach significance (log-rank p=0.0619), suggesting larger diverse trials are needed
-- Transmission risk group survival: Hemophilia patients show notably worse outcomes vs other groups; IV drug use also associated with worse survival
+| Model | 5-fold CV ROC-AUC | Held-out test ROC-AUC |
+|-------|-------------------|-----------------------|
+| Random Forest (200 trees, depth 8) | 0.657 | 0.659 |
+| Gradient Boosting (200 trees, lr 0.05) | 0.651 | not reported |
 
-5. Equity & Heterogeneity
-- Measurable CD4 response difference: majority group +32.4 vs minority group +25.1 cells/mm³ (p < 0.05)
-- Dataset limitation: race recorded as binary in 1996 trial protocol — modern studies use full ethnicity data
+- AUC near 0.66 is modest: better than chance, far from clinically useful.
+- Most important features in the Random Forest: baseline CD4, baseline CD8, body weight, age, prior antiretroviral therapy, treatment arm.
+
+### 4. Subgroup model performance (held-out test set, n = 428)
+AUC is computed only on patients the Random Forest did not train on.
+
+| Subgroup | n (test) | Held-out AUC |
+|----------|----------|--------------|
+| White | 307 | 0.682 |
+| Non-white | 121 | 0.591 |
+| Female | 73 | 0.676 |
+| Male | 355 | 0.656 |
+
+- Discrimination is weakest for the non-white group, but that group has only 121 test patients, so the estimate is noisy. The dashboard reports 95% bootstrap confidence intervals for each subgroup.
+- The data cannot establish either the presence or absence of model bias.
+
+### 5. Survival analysis (Kaplan-Meier)
+- Race (binary): log-rank p = 0.0619, not significant.
+- Treatment arm and transmission risk group: curves are shown in the notebook and dashboard. The dashboard computes log-rank p-values live for the selected patients. Group differences should not be read from the curves without those p-values. Curves are unadjusted, and some groups are small (hemophilia n = 180, IV drug use n = 276).
 
 ---
 
-Methods
+## Methods
 
 | Method | Purpose |
 |--------|---------|
-| Descriptive statistics | Baseline demographics, CD4/CD8 distributions |
-| Independent t-tests | Group comparisons (α = 0.05) |
-| Linear regression | Baseline outcome prediction (R² = 0.69) |
-| Random Forest (n=200 trees) | Treatment outcome classification |
-| Gradient Boosting (n=200, lr=0.05) | Treatment outcome classification |
-| Kaplan-Meier + log-rank test | Survival analysis by subgroup |
-| Subgroup AUC analysis | Model equity evaluation |
+| Welch t-test | CD4 change by race |
+| Random Forest, Gradient Boosting | Predict any CD4 increase |
+| Stratified 5-fold CV and 80/20 held-out split (seed 42) | Estimate ROC-AUC |
+| Held-out subgroup AUC with bootstrap CIs | Compare model performance across groups |
+| Kaplan-Meier, log-rank tests | Survival by treatment arm, race, risk group |
 
 ---
 
-Technologies
-- Python 3.x — pandas, numpy, matplotlib, seaborn
-- scikit-learn — Random Forest, Gradient Boosting, cross-validation
-- lifelines — Kaplan-Meier survival analysis
-- ucimlrepo — dataset loading
+## Limitations
+- **Race is binary.** The 1996 protocol recorded race as white vs non-white. This is a dataset limitation, not a modeling choice, and it hides most of the variation that matters.
+- **Small subgroups.** Subgroup estimates (especially non-white and female test sets) have wide uncertainty.
+- **Weak outcome definition.** Any CD4 increase, however small, is a noisy label.
+- **Unadjusted comparisons.** Group differences are not adjusted for baseline CD4, treatment arm, or other covariates.
+- **Old data.** Treatments in this trial (ZDV, ddI, zalcitabine) are not current standard of care.
 
 ---
 
-Dataset
-AIDS Clinical Trials Group Study 175
-UC Irvine Machine Learning Repository  
-DOI: https://doi.org/10.24432/C5JK5B  
-2,139 patients · 4 treatment arms · 20-week follow-up · 1996
+## Corrections to earlier versions
+An earlier version of this README reported a mean CD4 increase of +30.2, a 7.3 cells/mm³ significant race gap, and "no algorithmic bias detected" based on subgroup AUCs of about 0.88 computed on all patients, including training data. Re-checking showed the first two did not reproduce and the third was an in-sample artifact. The numbers above replace them.
 
 ---
 
-Running the Analysis
+## Technologies
+Python, pandas, numpy, scipy, scikit-learn, lifelines, matplotlib, Streamlit, ucimlrepo.
+
+## Dataset
+AIDS Clinical Trials Group Study 175, UC Irvine Machine Learning Repository.
+DOI: https://doi.org/10.24432/C5JK5B
+2,139 patients, 4 treatment arms, 1996.
+
+## Running the analysis
 ```bash
-pip install ucimlrepo scikit-learn lifelines pandas numpy matplotlib seaborn
+pip install -r requirements.txt
 jupyter notebook aids_clinical_analysis.ipynb
+streamlit run app.py
 ```
 
 ---
 
-Motivation
-Modern HIV patients achieve viral suppression but face new challenges: metabolic side effects, performance capacity, and quality of life optimization. This project was motivated by a personal question — do different populations respond differently to HIV treatment? As someone living with HIV since infancy, the shift from survival-focused to performance-focused care is lived experience, not just a research framing.
+## Motivation
+Modern HIV patients achieve viral suppression but face new challenges: metabolic side effects, performance capacity, and quality of life optimization. This project grew out of a personal question: do different populations respond differently to HIV treatment? As someone living with HIV since infancy, the shift from survival-focused to performance-focused care is lived experience, not just a research framing.
 
-> "In 1996, HIV patients fought to survive. In 2026, we optimize for performance."
+> *"In 1996, HIV patients fought to survive. In 2026, we optimize for performance."*
 
----
+## Future directions
+- Adjusted models (baseline CD4, treatment arm) for group differences in CD4 response
+- A less noisy outcome definition, such as a clinically meaningful CD4 increase
+- Modern ART registry data with richer race and ethnicity coding
+- Pharmacogenomic markers
 
-Future Directions
-- Survival interaction effects between demographics and treatment arms
-- Integration with modern ART registry data
-- Pharmacogenomic marker incorporation
-- Personalized treatment recommendation system
-
----
-
-Citation & Acknowledgments
-- AIDS Clinical Trials Group Study 175 Dataset, UCI ML Repository
+## Acknowledgments
+- AIDS Clinical Trials Group Study 175 dataset, UCI ML Repository
 - Rice Datathon 2026
-- Anthropic Claude — analysis assistance
+- Claude (Anthropic) for analysis assistance
 
-License
-MIT License# ImmuneEQ — CD4/CD8 Trajectories, Treatment Heterogeneity & Equity-Informed Precision Medicine in HIV Care
-Rice Datathon 2026 - Beginner Track
-
----
-
-Overview
-ImmuneEQ analyzes the AIDS Clinical Trials Group Study 175 dataset (1996) to investigate treatment heterogeneity and explore evidence for precision medicine approaches in HIV care. The analysis combines classical statistical methods with machine learning to reveal measurable differences in treatment response across demographic groups and transmission risk categories.
-
----
-
-Key Findings
-
-1. Treatment Effectiveness
-- 55% of patients showed CD4 cell improvement over 20 weeks
-- Mean CD4 increase: +30.2 cells/mm³ overall
-- ZDV + ddI and ddI-only arms outperformed ZDV monotherapy
-
-2. Machine Learning — Treatment Outcome Prediction
-- Random Forest classifier**: Cross-validated AUC = 0.657
-- Gradient Boosting classifier**: Cross-validated AUC = 0.651
-- Top predictive features: baseline CD4, baseline CD8, body weight, age, prior antiretroviral therapy
-- Race emerged as an independent predictive feature, validating the equity analysis
-
-### 3. Model Equity Analysis
-- By race: White AUC = 0.876, Non-white AUC = 0.878 — no algorithmic bias detected
-- By gender: Female AUC = 0.920, Male AUC = 0.868 — model predicts female outcomes more accurately, suggesting differential treatment response patterns worth further investigation
-
-4. Survival Analysis (Kaplan-Meier)
-- Treatment arms show clear survival separation — combination therapy outperforms monotherapy
-- Racial survival gap approaches but does not reach significance (log-rank p=0.0619), suggesting larger diverse trials are needed
-- Transmission risk group survival: Hemophilia patients show notably worse outcomes vs other groups; IV drug use also associated with worse survival
-
-5. Equity & Heterogeneity
-- Measurable CD4 response difference: majority group +32.4 vs minority group +25.1 cells/mm³ (p < 0.05)
-- Dataset limitation: race recorded as binary in 1996 trial protocol — modern studies use full ethnicity data
-
----
-
-Methods
-
-| Method | Purpose |
-|--------|---------|
-| Descriptive statistics | Baseline demographics, CD4/CD8 distributions |
-| Independent t-tests | Group comparisons (α = 0.05) |
-| Linear regression | Baseline outcome prediction (R² = 0.69) |
-| Random Forest (n=200 trees) | Treatment outcome classification |
-| Gradient Boosting (n=200, lr=0.05) | Treatment outcome classification |
-| Kaplan-Meier + log-rank test | Survival analysis by subgroup |
-| Subgroup AUC analysis | Model equity evaluation |
-
----
-
-Technologies
-- Python 3.x — pandas, numpy, matplotlib, seaborn
-- scikit-learn — Random Forest, Gradient Boosting, cross-validation
-- lifelines — Kaplan-Meier survival analysis
-- ucimlrepo — dataset loading
-
----
-
-Dataset
-AIDS Clinical Trials Group Study 175
-UC Irvine Machine Learning Repository  
-DOI: https://doi.org/10.24432/C5JK5B  
-2,139 patients · 4 treatment arms · 20-week follow-up · 1996
-
----
-
-Running the Analysis
-```bash
-pip install ucimlrepo scikit-learn lifelines pandas numpy matplotlib seaborn
-jupyter notebook aids_clinical_analysis.ipynb
-```
-
----
-
-Motivation
-Modern HIV patients achieve viral suppression but face new challenges: metabolic side effects, performance capacity, and quality of life optimization. This project was motivated by a personal question — do different populations respond differently to HIV treatment? As someone living with HIV since infancy, the shift from survival-focused to performance-focused care is lived experience, not just a research framing.
-
-> "In 1996, HIV patients fought to survive. In 2026, we optimize for performance."
-
----
-
-Future Directions
-- Survival interaction effects between demographics and treatment arms
-- Integration with modern ART registry data
-- Pharmacogenomic marker incorporation
-- Personalized treatment recommendation system
-
----
-
-Citation & Acknowledgments
-- AIDS Clinical Trials Group Study 175 Dataset, UCI ML Repository
-- Rice Datathon 2026
-- Anthropic Claude — analysis assistance
-
-License
-MIT License 
+## License
+MIT License
